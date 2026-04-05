@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>쪽잠맵 — 전국 쪽잠 스팟 지도</title>
+<meta name="description" content="전국 찜질방·만화카페·캡슐호텔·낮잠카페를 한눈에 찾아보세요. 내 주변 쪽잠 스팟 검색, 평점, 가격, 운영시간 정보 제공.">
+<meta name="keywords" content="쪽잠,낮잠카페,찜질방,캡슐호텔,만화카페,24시사우나,수면카페,쪽잠맵">
+<meta property="og:title" content="쪽잠맵 — 전국 쪽잠 스팟 지도">
+<meta property="og:description" content="급하게 잘 곳이 필요할 때! 전국 찜질방·만화카페·캡슐호텔을 한눈에 찾아보세요.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ceochoiyj.github.io/zzokjam-map/">
+<meta name="theme-color" content="#7F77DD">
+<!-- 구글 애드센스: 승인 후 아래 주석을 해제하고 ca-pub-XXXXX를 본인 ID로 교체하세요 -->
+<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=bb9033f506f322a759ed282b373556d4&libraries=services"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{font-family:'Pretendard Variable',sans-serif;background:#FAFAF7;color:#1a1a1a;line-height:1.5;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+button{font-family:inherit;cursor:pointer}
+::-webkit-scrollbar{width:0;height:0}
+.app{max-width:480px;margin:0 auto;min-height:100dvh;position:relative}
+.header{background:#fff;padding:14px 20px 0;border-bottom:1px solid #f0f0ec;position:sticky;top:0;z-index:100}
+.top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.logo{font-size:22px;font-weight:800;letter-spacing:-.5px}.logo .accent{color:#7F77DD}
+.logo .sub{font-size:11px;font-weight:400;color:#bbb;margin-left:6px}
+.sponsor-btn{background:#EEEDFE;border:none;border-radius:10px;padding:0 14px;height:38px;font-size:13px;font-weight:700;color:#7F77DD;display:flex;align-items:center;gap:4px}
+.search-bar{margin-bottom:10px;position:relative}
+.search-bar input{width:100%;height:40px;border:1.5px solid #EEEDFE;border-radius:10px;padding:0 12px 0 36px;font-size:14px;outline:none;background:#FAFAF7}
+.search-icon{position:absolute;left:12px;top:12px;color:#bbb}
+.view-toggle{display:flex;gap:4px;margin-bottom:10px;background:#F3F3EF;border-radius:10px;padding:3px}
+.view-btn{flex:1;padding:7px;background:transparent;border:none;border-radius:8px;font-size:13px;font-weight:500;color:#999;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px}
+.view-btn.active{background:#fff;font-weight:700;color:#2C2C2A;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px}
+.pill{padding:6px 13px;border-radius:20px;border:none;font-size:13px;font-weight:600;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:4px}
+.regions{display:flex;gap:5px;overflow-x:auto;padding-bottom:10px;margin-top:2px}
+.region-btn{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;border:1px solid #e8e8e4;background:#fff;color:#999}
+.region-btn.active{border:1.5px solid #2C2C2A;background:#2C2C2A;color:#fff}
+.card{background:#fff;border-radius:16px;padding:16px;cursor:pointer;border:1px solid #f0f0ec;transition:transform .1s}
+.card:active{transform:scale(.98)}
+.card-row{display:flex;gap:12px;align-items:flex-start}
+.card-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-name{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-meta{display:flex;align-items:center;gap:6px;margin-top:4px;margin-bottom:6px}
+.badge{font-size:11px;padding:1px 6px;border-radius:4px;font-weight:600}
+.badge-24{font-size:9px;color:#1D9E75;background:#E1F5EE;padding:1px 5px;border-radius:3px;font-weight:700}
+.card-info{display:flex;align-items:center;gap:6px;font-size:12px}
+.star{color:#EF9F27;display:flex;align-items:center;gap:2px}
+.dot{color:#ddd}
+.sort-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sort-btn{padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;border:none}
+.cta-banner{background:linear-gradient(135deg,#EEEDFE,#F8F7FF);border-radius:14px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;border:1px solid #EEEDFE}
+.cta-icon{width:40px;height:40px;border-radius:10px;background:#7F77DD;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.bottom-cta{margin-top:24px;background:#EEEDFE;border-radius:16px;padding:24px 20px;text-align:center}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:480px;width:100%;background:#fff;border-top:1px solid #f0f0ec;padding:6px 20px 10px;display:flex;justify-content:space-around;z-index:50}
+.nav-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 20px;font-size:10px;font-weight:600}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;z-index:9999}
+.sheet{background:#fff;border-radius:24px 24px 0 0;padding:28px 24px 36px;max-width:480px;width:100%;max-height:80dvh;overflow-y:auto;animation:sheetUp .3s ease}
+.modal{background:#fff;border-radius:20px;padding:32px 24px;max-width:380px;width:100%;position:relative;animation:slideUp .25s ease}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(-50%) translateY(0)}to{opacity:0;transform:translateX(-50%) translateY(10px)}}
+.info-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.info-label{font-size:12px;color:#999;width:56px}
+.info-value{font-size:14px;color:#2C2C2A;font-weight:500}
+.action-btn{flex:1;padding:14px;border:none;border-radius:12px;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px}
+.tier{display:flex;align-items:center;gap:12px;border-radius:14px;padding:14px 16px;border:1.5px solid transparent;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:rgba(127,119,221,.2)}
+.tier:hover{border-color:#7F77DD;background:#EEEDFE!important}
+.tier:active{transform:scale(.97);border-color:#7F77DD;background:#DDD8FD!important}
+.tier.featured{background:#EEEDFE;border-color:#7F77DD}
+.tier.featured:active{background:#CEC8F6!important}
+.tier-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.map-container{width:100%;height:100%;background:#E8E6DF;border-radius:16px;position:relative;overflow:hidden}
+.map-marker{position:absolute;transform:translate(-50%,-100%);cursor:pointer;z-index:10;display:flex;flex-direction:column;align-items:center}
+.marker-pin{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.2);border:2px solid #fff}
+.marker-pin svg{transform:rotate(45deg)}
+.marker-label{background:#fff;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.1);margin-top:2px;color:#2C2C2A}
+.kakao-infowindow{border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+// ── DATA ──
+const PLACES=[
+{id:1,name:"카툰플러스 홍대",type:"만화카페",region:"서울",area:"마포구",lat:37.5531,lng:126.9211,rating:4.9,reviews:2019,price:"~10,000원/3h",hours:"24시간",is24:true,desc:"넷플릭스·닌텐도·마사지체어·이불 무료 제공",phone:"02-337-6588"},
+{id:2,name:"더파크 스파랜드",type:"찜질방",region:"서울",area:"영등포구",lat:37.5265,lng:126.8929,rating:4.6,reviews:558,price:"11,000원~",hours:"24시간",is24:true,desc:"서울 찜질방 최고 평점. 온열방+수면실+식당 완비",phone:"02-2069-2229"},
+{id:3,name:"ZAMSHH 명동",type:"낮잠카페",region:"서울",area:"중구",lat:37.5655,lng:126.984,rating:5.0,reviews:9,price:"~20,000원/1h",hours:"10:00-21:00",is24:false,desc:"개인실 마사지체어+이불+프로젝터. 커피·쿠키 포함",phone:"070-4155-4407"},
+{id:4,name:"쉼스토리 강남",type:"낮잠카페",region:"서울",area:"강남구",lat:37.4946,lng:127.031,rating:4.5,reviews:123,price:"3,000원/1h~",hours:"10:00-22:30",is24:false,desc:"강남역 근처. 마사지체어+음료. 30분/1시간 선택",phone:"070-7778-6441"},
+{id:5,name:"MR.HEALING 명동",type:"낮잠카페",region:"서울",area:"중구",lat:37.5623,lng:126.9855,rating:4.4,reviews:59,price:"13,000원/50min",hours:"11:00-20:00",is24:false,desc:"50분 마사지+무료음료. 영어 가능",phone:"02-3789-4690"},
+{id:6,name:"Mr.Healing 신촌",type:"낮잠카페",region:"서울",area:"서대문구",lat:37.5562,lng:126.939,rating:4.4,reviews:102,price:"13,000원/50min",hours:"10:30-24:00",is24:false,desc:"보드게임·오락기 보유. 자정까지 운영",phone:"02-2138-1187"},
+{id:7,name:"심신프리 홍대",type:"낮잠카페",region:"서울",area:"마포구",lat:37.5537,lng:126.9223,rating:4.1,reviews:27,price:"10,900원/1h",hours:"24시간",is24:true,desc:"네이버 예약 시 할인. 홍대 힐링카페",phone:"070-5118-5357"},
+{id:8,name:"스파렉스 굿모닝시티",type:"찜질방",region:"서울",area:"중구",lat:37.5669,lng:127.0073,rating:4.0,reviews:1556,price:"12,000원~",hours:"24시간",is24:true,desc:"동대문 B3층. 히말라야소금방·황토방",phone:"02-2273-2777"},
+{id:9,name:"스파렉스 종로",type:"찜질방",region:"서울",area:"종로구",lat:37.5718,lng:127.0152,rating:4.2,reviews:557,price:"13,000원~",hours:"24시간",is24:true,desc:"동대문 근처. 헬스장 겸비. 깔끔한 시설",phone:"02-973-6377"},
+{id:10,name:"현대목욕탕",type:"찜질방",region:"서울",area:"종로구",lat:37.5749,lng:126.9735,rating:3.6,reviews:58,price:"~15,000원",hours:"24시간",is24:true,desc:"광화문 근처. 사우나+때밀이",phone:"02-734-8660"},
+{id:11,name:"THE CAPSULE 명동",type:"캡슐호텔",region:"서울",area:"중구",lat:37.5635,lng:126.9989,rating:3.8,reviews:175,price:"~25,000원",hours:"11:00-23:00",is24:false,desc:"잠금문 개인 캡슐. 명동 중심",phone:"070-8956-1986"},
+{id:12,name:"삼성역 애니팝",type:"만화카페",region:"서울",area:"강남구",lat:37.5069,lng:127.0626,rating:4.6,reviews:51,price:"20,000원/10h",hours:"24시간",is24:true,desc:"1박 가능. 샤워실. COEX 근처",phone:"02-552-6052"},
+{id:13,name:"무림만화카페",type:"만화카페",region:"서울",area:"종로구",lat:37.5691,lng:126.9868,rating:4.4,reviews:60,price:"~2,400원/h",hours:"10:30-22:00",is24:false,desc:"종각역. 1인실(평일). 서울 최저가",phone:"02-739-8800"},
+{id:14,name:"힐스파 해운대",type:"찜질방",region:"부산",area:"해운대구",lat:35.1585,lng:129.1753,rating:4.2,reviews:219,price:"11,000원~",hours:"24시간",is24:true,desc:"달맞이길 5층. 오션뷰+다양한 사우나실",phone:"051-913-5700"},
+{id:15,name:"태종대온천·찜질방",type:"찜질방",region:"부산",area:"영도구",lat:35.0646,lng:129.0789,rating:4.0,reviews:1027,price:"11,000원~",hours:"24시간",is24:true,desc:"부산 대표 대형 온천. 노천탕+찜질방",phone:"051-404-9001"},
+{id:16,name:"밸리아쿠아랜드",type:"찜질방",region:"부산",area:"동구",lat:35.1155,lng:129.038,rating:3.7,reviews:514,price:"13,000원~",hours:"24시간",is24:true,desc:"부산역 차이나타운 7층. 수면실+편의점",phone:"051-442-1551"},
+{id:17,name:"젊은이의양지 광안",type:"만화카페",region:"부산",area:"수영구",lat:35.1547,lng:129.1199,rating:4.6,reviews:5,price:"2,900원/h~",hours:"24시간",is24:true,desc:"광안리 해변. 닌텐도·PS·마사지체어·보드게임",phone:"050-71375-9757"},
+{id:18,name:"젊은이의양지 전포",type:"만화카페",region:"부산",area:"부산진구",lat:35.1536,lng:129.0657,rating:5.0,reviews:2,price:"2,900원/h~",hours:"24시간",is24:true,desc:"전포 카페거리. 만화+닌텐도+침대 올인원",phone:"050-71395-5415"},
+{id:19,name:"봐라봐라만화방",type:"만화카페",region:"부산",area:"동래구",lat:35.2043,lng:129.0666,rating:3.6,reviews:52,price:"1,000원/h~",hours:"24시간",is24:true,desc:"부산 최저가. 숙박+식사 가능",phone:"010-3395-2002"},
+{id:20,name:"광안리호텔1",type:"캡슐호텔",region:"부산",area:"수영구",lat:35.1525,lng:129.1174,rating:4.7,reviews:2247,price:"30,000원~",hours:"24시간",is24:true,desc:"오션뷰 캡슐. 파자마+스낵 제공. 부산 최고평점",phone:"051-759-1011"},
+{id:21,name:"그린빌사우나",type:"찜질방",region:"대구",area:"중구",lat:35.8633,lng:128.5924,rating:3.8,reviews:408,price:"12,000원~",hours:"24시간",is24:true,desc:"반월당역 1분. 대구 도심 대표 찜질방",phone:"053-427-6665"},
+{id:22,name:"황소사우나",type:"찜질방",region:"대구",area:"달서구",lat:35.8548,lng:128.5078,rating:3.7,reviews:76,price:"10,000원~",hours:"24시간",is24:true,desc:"대구 서부 대형 찜질방. 수면실+부대시설",phone:"053-591-9100"},
+{id:23,name:"홈스파월드",type:"찜질방",region:"대구",area:"남구",lat:35.8331,lng:128.5962,rating:4.1,reviews:482,price:"9,000원~",hours:"06:00-23:00",is24:false,desc:"앞산. 다양한 온탕+마사지·때밀이 추천",phone:"053-470-1100"},
+{id:24,name:"스파렉스 인천연수",type:"찜질방",region:"인천",area:"연수구",lat:37.4156,lng:126.679,rating:4.4,reviews:50,price:"11,000원~",hours:"24시간",is24:true,desc:"인천 최고평점. 신축 깔끔. 장작사우나",phone:"050-71391-8783"},
+{id:25,name:"동인천스파랜드",type:"찜질방",region:"인천",area:"중구",lat:37.4763,lng:126.6296,rating:3.4,reviews:141,price:"9,000원~",hours:"24시간",is24:true,desc:"동인천역 앞. 야간할인. 가성비 찜질방",phone:"032-777-8787"},
+{id:26,name:"유성온천불가마",type:"찜질방",region:"대전",area:"유성구",lat:36.3568,lng:127.3451,rating:4.3,reviews:764,price:"11,000원~",hours:"24시간",is24:true,desc:"유성온천수 사용. 노천탕+5개 온탕. 대전 최고",phone:"042-823-7575"},
+{id:27,name:"로데오랜드불가마",type:"찜질방",region:"대전",area:"대덕구",lat:36.3473,lng:127.388,rating:3.8,reviews:186,price:"10,000원~",hours:"24시간",is24:true,desc:"가마사우나+피트니스+코인노래방",phone:"042-485-9270"},
+{id:28,name:"놀숲 대전도안점",type:"만화카페",region:"대전",area:"서구",lat:36.3303,lng:127.3386,rating:4.2,reviews:97,price:"시간당 요금제",hours:"24시간",is24:true,desc:"넓은 공간. 보드게임·간식 풍부",phone:"042-719-7749"},
+{id:29,name:"현대웰빙랜드",type:"찜질방",region:"광주",area:"북구",lat:35.1755,lng:126.8879,rating:3.9,reviews:616,price:"8,000원~",hours:"24시간",is24:true,desc:"광주 대표. 실내외 온탕 9개+건식사우나",phone:"062-526-2001"},
+{id:30,name:"월드드림랜드",type:"찜질방",region:"광주",area:"광산구",lat:35.1795,lng:126.8109,rating:3.8,reviews:442,price:"10,000원~",hours:"24시간",is24:true,desc:"수영장+헬스장+찜질방 복합. 가족 인기",phone:"1588-0046"},
+{id:31,name:"놀숲 제주",type:"만화카페",region:"제주",area:"제주시",lat:33.4996,lng:126.5312,rating:4.0,reviews:30,price:"시간당 요금제",hours:"10:00-23:00",is24:false,desc:"제주 시내. 만화·보드게임. 여행 중 쉬어가기",phone:""},
+// ── 서울 추가 ──
+{id:32,name:"24시 사우나 찜질방",type:"찜질방",region:"서울",area:"강서구",lat:37.5390,lng:126.8357,rating:4.1,reviews:130,price:"10,000원~",hours:"24시간",is24:true,desc:"화곡동. 깔끔한 시설. 외국인 친화적",phone:""},
+{id:33,name:"스파존 불한증막",type:"찜질방",region:"서울",area:"강서구",lat:37.5299,lng:126.8462,rating:3.9,reviews:154,price:"11,000원~",hours:"24시간",is24:true,desc:"화곡동 해태드림타운. 리모델링 완료. 넓은 시설",phone:"02-2693-3516"},
+{id:34,name:"라성스파",type:"찜질방",region:"서울",area:"성동구",lat:37.5452,lng:127.0577,rating:3.7,reviews:134,price:"14,000원~",hours:"24시간",is24:true,desc:"성수동. PC방·노래방 내부 보유. 15시간 기본",phone:""},
+{id:35,name:"성수불막사우나",type:"찜질방",region:"서울",area:"성동구",lat:37.5454,lng:127.0655,rating:3.7,reviews:111,price:"10,000원~",hours:"24시간",is24:true,desc:"건대입구 근처. 로컬 분위기. 찜질방+온탕",phone:"02-467-9800"},
+{id:36,name:"쉐르빌사우나",type:"찜질방",region:"서울",area:"성동구",lat:37.5643,lng:127.0349,rating:3.7,reviews:173,price:"10,000원~",hours:"24시간",is24:true,desc:"왕십리역. 동네 목욕탕+찜질방. 숯가마 땀 잘남",phone:"02-2295-0009"},
+{id:37,name:"JCU사우나 명일",type:"찜질방",region:"서울",area:"강동구",lat:37.5269,lng:127.1347,rating:4.0,reviews:72,price:"12,000원~",hours:"24시간",is24:true,desc:"명일역. 경락마사지·황토방. 주차 편리",phone:"02-474-0196"},
+{id:38,name:"한강허브대중탕",type:"찜질방",region:"서울",area:"강동구",lat:37.5405,lng:127.1250,rating:3.7,reviews:116,price:"11,000원~",hours:"24시간",is24:true,desc:"천호동. 오래됐지만 관리 잘됨. 힐링 스팟",phone:"02-476-1500"},
+{id:39,name:"올뉴만화카페 역삼",type:"만화카페",region:"서울",area:"강남구",lat:37.5052,lng:127.0470,rating:3.8,reviews:89,price:"3,000원/h~",hours:"24시간",is24:true,desc:"선릉역. PC방+만화방. 눕는 공간 넓음",phone:"070-4618-0707"},
+{id:40,name:"24시만화방 사당",type:"만화카페",region:"서울",area:"동작구",lat:37.4856,lng:126.9808,rating:3.8,reviews:11,price:"2,000원/h~",hours:"24시간",is24:true,desc:"사당역. 1인실·커플실·여성전용실 분리",phone:"02-533-1349"},
+{id:41,name:"24시만화카페 종로",type:"만화카페",region:"서울",area:"종로구",lat:37.5748,lng:127.0205,rating:4.0,reviews:4,price:"2,000원/h~",hours:"24시간",is24:true,desc:"대학로 근처. 저렴. 수면의자 있음",phone:"02-3673-5535"},
+{id:42,name:"해양불가마사우나",type:"찜질방",region:"서울",area:"구로구",lat:37.5019,lng:126.8888,rating:3.6,reviews:17,price:"12,000원~",hours:"24시간",is24:true,desc:"구로동. 리모델링 완료. 가마에서 땀 잘남",phone:"02-3281-7770"},
+// ── 경기도 ──
+{id:43,name:"스파렉스 수원영통",type:"찜질방",region:"경기",area:"수원 영통구",lat:37.2520,lng:127.0710,rating:3.7,reviews:302,price:"10,000원~",hours:"24시간",is24:true,desc:"영통동. 넓은 시설. 항상 붐빔",phone:"031-206-6677"},
+{id:44,name:"스파렉스 수원신영통",type:"찜질방",region:"경기",area:"수원 영통구",lat:37.2373,lng:127.0582,rating:4.1,reviews:192,price:"12,000원~",hours:"24시간",is24:true,desc:"망포동. 다양한 온탕+냉탕. 때밀이 추천",phone:"031-204-1010"},
+{id:45,name:"온수골대중탕",type:"찜질방",region:"경기",area:"수원 권선구",lat:37.2503,lng:127.0347,rating:4.1,reviews:783,price:"9,000원~",hours:"24시간",is24:true,desc:"수원 최대 규모. 온탕 8개+냉탕 3개+노천탕",phone:"031-221-4277"},
+{id:46,name:"현대보석불가마",type:"찜질방",region:"경기",area:"수원 팔달구",lat:37.2754,lng:126.9774,rating:3.8,reviews:143,price:"10,000원~",hours:"24시간",is24:true,desc:"수원역 근처. 만화방+식당+찜질방",phone:"031-296-9221"},
+{id:47,name:"로만바스",type:"찜질방",region:"경기",area:"용인 처인구",lat:37.2331,lng:127.1570,rating:4.0,reviews:196,price:"12,000원~",hours:"24시간",is24:true,desc:"용인. 파도풀+일반풀+찜질방. 가족 인기",phone:"031-335-1118"},
+// ── 울산 ──
+{id:48,name:"연산해수피아",type:"찜질방",region:"울산",area:"연제구",lat:35.1916,lng:129.0853,rating:3.9,reviews:262,price:"10,000원~",hours:"24시간",is24:true,desc:"부산 연산. 24시간 대형 해수찜질방",phone:"051-853-7541"},
+// ── 충북 ──
+{id:49,name:"뉴골드사우나 청주",type:"찜질방",region:"충북",area:"청주 상당구",lat:36.6707,lng:127.4832,rating:3.7,reviews:59,price:"9,000원~",hours:"24시간",is24:true,desc:"청주공항 근처. 현지인 맛집. 때밀이 추천",phone:"043-217-4005"},
+{id:50,name:"명인사우나 청주",type:"찜질방",region:"충북",area:"청주 흥덕구",lat:36.6160,lng:127.4410,rating:3.9,reviews:239,price:"11,000원~",hours:"24시간",is24:true,desc:"몰 지하. 넓은 수면 공간. 에어컨 강함",phone:"043-236-4441"},
+// ── 충남 ──
+{id:51,name:"굿모닝스파 천안",type:"찜질방",region:"충남",area:"천안 동남구",lat:36.8184,lng:127.1603,rating:4.0,reviews:106,price:"12,000원~",hours:"24시간",is24:true,desc:"천안역 근처. 외국인 리뷰 좋음. 동굴방 인기",phone:"041-551-2885"},
+{id:52,name:"골드스파 천안",type:"찜질방",region:"충남",area:"천안 서북구",lat:36.8331,lng:127.1425,rating:3.6,reviews:131,price:"10,000원~",hours:"24시간",is24:true,desc:"두정동 8층. 다양한 찜질방. 헬스장 포함",phone:""},
+// ── 전북 ──
+// ── 제주 추가 ──
+{id:53,name:"도두해수공원",type:"찜질방",region:"제주",area:"제주시",lat:33.5085,lng:126.4713,rating:3.8,reviews:961,price:"9,000원~",hours:"24시간",is24:true,desc:"제주 대표 찜질방. 해수온천+찜질방+식당",phone:"064-711-1000"},
+// ── 전북 ──
+{id:54,name:"로델트리스파 전주",type:"찜질방",region:"전북",area:"전주 완산구",lat:35.8145,lng:127.1101,rating:4.0,reviews:176,price:"13,000원~",hours:"24시간",is24:true,desc:"전주 한옥마을 근처. 클레이사우나+대형 찜질방",phone:"063-236-0082"},
+{id:55,name:"쉼스파 전주",type:"찜질방",region:"전북",area:"전주 덕진구",lat:35.8253,lng:127.1656,rating:3.6,reviews:207,price:"10,000원~",hours:"24시간",is24:true,desc:"가족실 예약 가능. 식당 맛집. 때밀이 추천",phone:"063-241-9900"},
+{id:56,name:"전주한옥스파",type:"찜질방",region:"전북",area:"전주 완산구",lat:35.8171,lng:127.1486,rating:3.6,reviews:279,price:"9,000원~",hours:"24시간",is24:true,desc:"한옥마을 인근. 체육관 포함. 외국인 리뷰 좋음",phone:"063-232-0020"},
+// ── 전남 ──
+{id:57,name:"엑스포해수피아 여수",type:"찜질방",region:"전남",area:"여수시",lat:34.7259,lng:127.7131,rating:3.5,reviews:309,price:"10,000원~",hours:"24시간",is24:true,desc:"여수 대표 찜질방. 체육관+사우나+식당",phone:"061-642-5600"},
+{id:58,name:"수향 여수",type:"찜질방",region:"전남",area:"여수시",lat:34.7443,lng:127.7419,rating:3.0,reviews:57,price:"8,000원~",hours:"24시간",is24:true,desc:"여수 동문동. 조용한 수면실. 가성비",phone:"061-666-2600"},
+// ── 경북 ──
+{id:59,name:"온천포항건강랜드",type:"찜질방",region:"경북",area:"포항 남구",lat:36.0280,lng:129.3318,rating:3.9,reviews:563,price:"8,000원~",hours:"24시간",is24:true,desc:"포항 대표 온천. 다양한 온탕+사우나",phone:"054-273-5140"},
+{id:60,name:"파라다이스유황천 포항",type:"찜질방",region:"경북",area:"포항 북구",lat:36.0853,lng:129.3336,rating:4.2,reviews:160,price:"8,000원~",hours:"24시간",is24:true,desc:"포항 외곽 유황온천. 가성비 최고. 식당 맛있음",phone:"054-261-5400"},
+{id:61,name:"경주한증막",type:"찜질방",region:"경북",area:"경주시",lat:35.8750,lng:129.1786,rating:3.7,reviews:73,price:"10,000원~",hours:"24시간",is24:true,desc:"경주 여행 후 쪽잠. 꽃탕+한증막",phone:"054-771-8500"},
+// ── 경남 ──
+{id:62,name:"킹사우나 창원",type:"찜질방",region:"경남",area:"창원 성산구",lat:35.2203,lng:128.6840,rating:3.6,reviews:51,price:"9,000원~",hours:"24시간",is24:true,desc:"창원 상남동. 깔끔하고 조용",phone:"055-263-2800"},
+{id:63,name:"도심속의쉼터 창원",type:"찜질방",region:"경남",area:"창원 성산구",lat:35.2233,lng:128.6775,rating:3.6,reviews:112,price:"13,000원~",hours:"24시간",is24:true,desc:"창원 도심. 체육관+수면실. 이름답게 편안",phone:"055-281-8272"},
+{id:64,name:"장유폭포수찜질랜드 김해",type:"찜질방",region:"경남",area:"김해시",lat:35.1868,lng:128.7907,rating:4.1,reviews:162,price:"10,000원~",hours:"24시간",is24:true,desc:"김해. 키즈놀이방+찜질방. 가족 인기",phone:"055-312-4411"},
+{id:65,name:"남부사우나 마산",type:"찜질방",region:"경남",area:"창원 마산합포구",lat:35.1807,lng:128.5598,rating:3.5,reviews:108,price:"9,000원~",hours:"24시간",is24:true,desc:"마산. 가성비 좋음. 수면실+식당",phone:"055-244-8100"},
+// ── 강원 ──
+{id:66,name:"월드온천24 춘천",type:"찜질방",region:"강원",area:"춘천시",lat:37.9494,lng:127.7542,rating:4.0,reviews:887,price:"10,000원~",hours:"24시간",is24:true,desc:"춘천 대표 온천. 알칼리 온천수. 월정액 가능",phone:"033-244-8889"},
+{id:67,name:"화산스파랜드 춘천",type:"찜질방",region:"강원",area:"춘천시",lat:37.8662,lng:127.7184,rating:3.6,reviews:339,price:"10,000원~",hours:"24시간",is24:true,desc:"시외버스터미널 옆. 새벽 버스 전 쪽잠 최적",phone:"033-242-4011"},
+{id:68,name:"아쿠아랜드 원주",type:"찜질방",region:"강원",area:"원주시",lat:37.3295,lng:127.9616,rating:3.4,reviews:185,price:"9,000원~",hours:"24시간",is24:true,desc:"원주 최초 찜질방. 넓은 시설. 담요 대여",phone:"033-761-8877"},
+{id:69,name:"웰빙불가마 원주",type:"찜질방",region:"강원",area:"원주시",lat:37.3861,lng:127.9509,rating:3.8,reviews:232,price:"10,000원~",hours:"24시간",is24:true,desc:"원주. 다양한 사우나+키즈플레이룸+식당",phone:"033-744-8855"},
+// ── 세종 ──
+{id:70,name:"세종스파찜질방",type:"찜질방",region:"세종",area:"세종시",lat:36.4981,lng:127.2231,rating:4.3,reviews:341,price:"10,000원~",hours:"24시간",is24:true,desc:"세종시 대표. 신축 깔끔. 스카이수영장",phone:"044-999-0600"},
+// ── 울산 추가 ──
+{id:71,name:"공업탑사우나 울산",type:"찜질방",region:"울산",area:"울산 남구",lat:35.5321,lng:129.3121,rating:3.7,reviews:258,price:"9,000원~",hours:"24시간",is24:true,desc:"울산 남구. 넓은 냉탕. 주차 편리",phone:"052-271-9966"},
+{id:72,name:"더블유사우나 울산",type:"찜질방",region:"울산",area:"울산 남구",lat:35.5348,lng:129.3499,rating:4.3,reviews:123,price:"10,000원~",hours:"24시간",is24:true,desc:"울산 최고평점. 노천공간+마사지풀. 고급시설",phone:"052-248-3333"},
+{id:73,name:"스카이리조트 울산",type:"찜질방",region:"울산",area:"울산 중구",lat:35.5754,lng:129.3119,rating:4.0,reviews:131,price:"10,000원~",hours:"24시간",is24:true,desc:"울산 중심. 체육관+사우나+찜질방 복합",phone:"052-248-5800"},
+// ── 경기 추가 ──
+{id:74,name:"크란츠스파랜드 성남",type:"찜질방",region:"경기",area:"성남 중원구",lat:37.4326,lng:127.1592,rating:3.8,reviews:208,price:"10,000원~",hours:"24시간",is24:true,desc:"성남 유일 가마찜질방. 넓고 한적",phone:"031-741-2555"},
+{id:75,name:"힐링수사우나 분당",type:"찜질방",region:"경기",area:"성남 분당구",lat:37.3706,lng:127.1148,rating:3.3,reviews:22,price:"12,000원~",hours:"24시간",is24:true,desc:"분당 정자동. 동네 목욕탕+찜질방",phone:"031-716-0365"},
+{id:76,name:"24시만화방 일산",type:"만화카페",region:"경기",area:"고양 일산동구",lat:37.6632,lng:126.7671,rating:4.4,reviews:68,price:"1,500원/h~",hours:"10:00-01:00",is24:false,desc:"일산. 저렴하고 만화 종류 풍부. 라면 가능",phone:""},
+{id:77,name:"24시만화방 성남",type:"만화카페",region:"경기",area:"성남 중원구",lat:37.4305,lng:127.1289,rating:3.3,reviews:16,price:"2,000원/h~",hours:"24시간",is24:true,desc:"성남역. 샤워실+세탁기+침대. 장기숙박 가능",phone:"070-7529-8843"},
+];
+const TYPES_LIST=["전체","낮잠카페","찜질방","캡슐호텔","만화카페"];
+const REGIONS_LIST=["전체","서울","경기","부산","대구","인천","울산","대전","세종","광주","강원","충북","충남","전북","전남","경북","경남","제주"];
+const TC={"낮잠카페":{c:"#7F77DD",bg:"#EEEDFE",ic:"moon"},"찜질방":{c:"#D85A30",bg:"#FAECE7",ic:"flame"},"캡슐호텔":{c:"#1D9E75",bg:"#E1F5EE",ic:"box"},"만화카페":{c:"#378ADD",bg:"#E6F1FB",ic:"book"}};
+const ICONS={
+moon:`<svg width="ICO" height="ICO" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
+flame:`<svg width="ICO" height="ICO" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14 0-5.5 3-7 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.5-2.66 1.5-3.5.5 1 1.5 2.5 2 3z"/></svg>`,
+box:`<svg width="ICO" height="ICO" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
+book:`<svg width="ICO" height="ICO" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+star:`<svg width="ICO" height="ICO" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`,
+heart:`<svg width="ICO" height="ICO" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+x:`<svg width="ICO" height="ICO" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+map:`<svg width="ICO" height="ICO" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+search:`<svg width="ICO" height="ICO" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+list:`<svg width="ICO" height="ICO" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`,
+nav:`<svg width="ICO" height="ICO" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>`,
+phone:`<svg width="ICO" height="ICO" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+coffee:`<svg width="ICO" height="ICO" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
+share:`<svg width="ICO" height="ICO" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
+won:`<svg width="ICO" height="ICO" viewBox="0 0 24 24"><text x="4" y="18" font-size="16" font-weight="700" fill="currentColor">₩</text></svg>`,
+clock:`<svg width="ICO" height="ICO" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+};
+function ico(name,size=16){return (ICONS[name]||'').replace(/ICO/g,size);}
+function stars(r){let h='';for(let i=1;i<=5;i++)h+=`<svg width="13" height="13" viewBox="0 0 24 24" fill="${i<=Math.round(r)?'#EF9F27':'none'}" stroke="#EF9F27" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;return h;}
+
+// ── STATE ──
+let state={type:'전체',region:'전체',view:'list',search:'',sort:'rating',selected:null,sponsor:false,showSearch:false,suggest:false,nearby:false,nearbyResults:[],nearbyLoading:false};
+function setState(patch){
+  if(patch.view&&patch.view!==state.view){kakaoMap=null;mapObj=null;mapType='none';autoSearched=false;}
+  if(patch.region&&patch.region!==state.region){kakaoMap=null;mapObj=null;mapType='none';}
+  if(patch.type&&patch.type!==state.type){kakaoMap=null;mapObj=null;mapType='none';}
+  Object.assign(state,patch);render();
+}
+
+// ── FILTER ──
+function filtered(){
+  let r=PLACES.filter(p=>{
+    if(state.type!=='전체'&&p.type!==state.type)return false;
+    if(state.region!=='전체'&&p.region!==state.region)return false;
+    if(state.search){const q=state.search.toLowerCase();return p.name.toLowerCase().includes(q)||p.region.includes(q)||p.area.includes(q)||p.type.includes(q);}
+    return true;
+  });
+  r.sort((a,b)=>state.sort==='rating'?b.rating-a.rating:b.reviews-a.reviews);
+  return r;
+}
+
+// ── RENDER ──
+function render(){
+  const f=filtered();
+  const app=document.getElementById('app');
+  app.innerHTML=`
+  <header class="header">
+    <div class="top-row">
+      <h1 class="logo"><span class="accent">쪽잠</span>맵<span class="sub">전국</span></h1>
+      <div style="display:flex;gap:6px">
+        <button onclick="setState({showSearch:!state.showSearch})" style="background:#F3F3EF;border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;color:#888">${ico('search',18)}</button>
+        <button class="sponsor-btn" onclick="setState({sponsor:true})">${ico('heart',14)} 후원</button>
+      </div>
+    </div>
+    ${state.showSearch?`<div class="search-bar"><input type="text" value="${state.search}" oninput="setState({search:this.value})" placeholder="장소명, 지역으로 검색..." autofocus><div class="search-icon">${ico('search',16)}</div></div>`:''}
+    <div class="view-toggle">
+      <button class="view-btn ${state.view==='list'?'active':''}" onclick="setState({view:'list'})">${ico('list',14)} 목록</button>
+      <button class="view-btn ${state.view==='map'?'active':''}" onclick="setState({view:'map'})">${ico('map',14)} 지도</button>
+    </div>
+    <div class="pills">${TYPES_LIST.map(t=>{
+      const c=t!=='전체'?TC[t]:null;const a=state.type===t;
+      return `<button class="pill" onclick="setState({type:'${t}'})" style="background:${a?(c?c.c:'#2C2C2A'):(c?c.bg:'#F3F3EF')};color:${a?'#fff':(c?c.c:'#666')}">${c?ico(c.ic,13):''}${t}</button>`;
+    }).join('')}</div>
+    <div class="regions">${REGIONS_LIST.map(r=>`<button class="region-btn ${state.region===r?'active':''}" onclick="setState({region:'${r}'})">${r}</button>`).join('')}</div>
+  </header>
+
+  ${state.view==='list'?renderList(f):renderMap(f)}
+
+  <nav class="bottom-nav">
+    <button class="nav-btn" style="color:#7F77DD">${ico('map',20)}탐색</button>
+    <button class="nav-btn" style="color:#ccc" onclick="setState({suggest:true})">${ico('nav',20)}제보</button>
+    <button class="nav-btn" style="color:#ccc" onclick="setState({sponsor:true})">${ico('heart',20)}후원</button>
+  </nav>
+
+  ${state.selected?renderDetail(state.selected):''}
+  ${state.sponsor?renderSponsor():''}
+  ${state.suggest?renderSuggest():''}
+  `;
+}
+
+function renderList(f){
+  return `<main style="padding:12px 16px 100px">
+    <!-- 온보딩 배너 -->
+    <div style="background:linear-gradient(135deg,#7F77DD,#534AB7);border-radius:16px;padding:20px;margin-bottom:12px;color:#fff">
+      <div style="font-size:17px;font-weight:800;margin-bottom:4px">급하게 잘 곳이 필요할 때!</div>
+      <div style="font-size:13px;opacity:.85;line-height:1.5">전국 찜질방·만화카페·캡슐호텔·낮잠카페를<br>한눈에 찾아보세요. 지도 탭에서 내 주변 검색도 가능!</div>
+    </div>
+
+    <div class="sort-row">
+      <span style="font-size:12px;color:#999">${f.length}개 장소</span>
+      <div style="display:flex;gap:4px">
+        <button class="sort-btn" onclick="setState({sort:'rating'})" style="background:${state.sort==='rating'?'#2C2C2A':'#F3F3EF'};color:${state.sort==='rating'?'#fff':'#999'}">평점순</button>
+        <button class="sort-btn" onclick="setState({sort:'reviews'})" style="background:${state.sort==='reviews'?'#2C2C2A':'#F3F3EF'};color:${state.sort==='reviews'?'#fff':'#999'}">리뷰순</button>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${f.length===0?'<div style="text-align:center;padding:40px 0;color:#bbb"><p>검색 결과가 없습니다</p></div>':''}
+      ${f.map((p,i)=>{const c=TC[p.type];return `
+        <div class="card" onclick="setState({selected:PLACES.find(x=>x.id===${p.id})})">
+          <div class="card-row">
+            <div class="card-icon" style="background:${c.bg};color:${c.c}">${ico(c.ic,24)}</div>
+            <div style="flex:1;min-width:0">
+              <div class="card-name">${p.name}</div>
+              <div class="card-meta">
+                <span class="badge" style="color:${c.c};background:${c.bg}">${p.type}</span>
+                <span style="font-size:11px;color:#aaa">${p.region} ${p.area}</span>
+                ${p.is24?'<span class="badge-24">24H</span>':''}
+              </div>
+              <div class="card-info">
+                <span class="star">${ico('star',12)} ${p.rating}</span>
+                <span class="dot">·</span>
+                <span style="color:#888">${p.price}</span>
+                <span class="dot">·</span>
+                <span style="color:#888;font-size:11px">${p.hours}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        ${(i+1)%3===0&&i<f.length-1?adBanner('mid'+i,'목록 중간 광고 영역'):''}
+        ${(i+1)%5===0&&i<f.length-1?`
+        <div class="cta-banner" onclick="setState({sponsor:true})">
+          <div class="cta-icon">${ico('coffee',20)}</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:#534AB7">쪽잠맵이 도움이 되셨나요?</div><div style="font-size:11px;color:#7F77DD;margin-top:1px">커피 한 잔으로 응원해주세요</div></div>
+          <div style="color:#7F77DD;font-size:12px;font-weight:700">후원 →</div>
+        </div>`:''}
+      `;}).join('')}
+    </div>
+
+    <!-- 광고 슬롯 4: 목록 하단 배너 -->
+    ${f.length>3?adBanner('bottom','목록 하단 광고 영역'):''}
+
+    <!-- 쪽잠 꿀템 추천 (쿠팡 파트너스 준비) -->
+    ${f.length>5?`
+    <div style="margin-top:16px;background:#FFF9F0;border-radius:16px;padding:20px;border:1px solid #FFE8C8">
+      <div style="font-size:15px;font-weight:800;color:#D85A30;margin-bottom:10px">${ico('coffee',18)} 쪽잠 꿀템 추천</div>
+      <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px">
+        <div style="min-width:130px;background:#fff;border-radius:12px;padding:12px;text-align:center;border:1px solid #f0ece4">
+          <div style="font-size:24px;margin-bottom:6px">😴</div>
+          <div style="font-size:12px;font-weight:700;color:#333">수면 안대</div>
+          <div style="font-size:11px;color:#888;margin-top:2px">찜질방 필수템</div>
+        </div>
+        <div style="min-width:130px;background:#fff;border-radius:12px;padding:12px;text-align:center;border:1px solid #f0ece4">
+          <div style="font-size:24px;margin-bottom:6px">🔇</div>
+          <div style="font-size:12px;font-weight:700;color:#333">소음 차단 귀마개</div>
+          <div style="font-size:11px;color:#888;margin-top:2px">코골이 방어</div>
+        </div>
+        <div style="min-width:130px;background:#fff;border-radius:12px;padding:12px;text-align:center;border:1px solid #f0ece4">
+          <div style="font-size:24px;margin-bottom:6px">🛫</div>
+          <div style="font-size:12px;font-weight:700;color:#333">휴대용 목베개</div>
+          <div style="font-size:11px;color:#888;margin-top:2px">어디서든 쪽잠</div>
+        </div>
+      </div>
+      <p style="font-size:10px;color:#bbb;margin-top:8px;text-align:center">쿠팡 파트너스 연동 준비 중</p>
+    </div>`:''}
+
+    ${f.length>0?`
+    <div class="bottom-cta">
+      <div style="color:#7F77DD;margin-bottom:8px">${ico('heart',28)}</div>
+      <p style="font-size:16px;font-weight:800;color:#534AB7;margin:0 0 4px">쪽잠맵을 응원해주세요</p>
+      <p style="font-size:12px;color:#7F77DD;margin:0 0 14px;line-height:1.5">후원금은 서버비와 데이터 업데이트에<br>사용됩니다. 감사합니다!</p>
+      <button onclick="setState({sponsor:true})" style="background:#7F77DD;color:#fff;border:none;border-radius:12px;padding:12px 28px;font-size:15px;font-weight:700">후원하기</button>
+    </div>`:''}
+  </main>`;
+}
+
+function renderMap(f){
+  return `<main style="padding:12px;height:calc(100dvh - 230px);min-height:400px;position:relative">
+    <div id="the-map" style="width:100%;height:100%;border-radius:16px;overflow:hidden"></div>
+    <button onclick="searchNearby()" style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:#7F77DD;color:#fff;border:none;border-radius:20px;padding:10px 20px;font-size:13px;font-weight:700;box-shadow:0 3px 12px rgba(127,119,221,.4);z-index:10;cursor:pointer;display:flex;align-items:center;gap:6px">
+      ${ico('map',14)} 내 주변 쪽잠 스팟 찾기
+    </button>
+  </main>`;
+}
+
+var mapObj=null;
+var mapType='none';
+
+function initKakaoMap(f){
+  var el=document.getElementById('the-map');
+  if(!el||!window.kakao||!window.kakao.maps)return;
+  
+  // 이미 지도가 있으면 스킵 (re-render 방지)
+  if(kakaoMap){return;}
+
+  kakaoMarkers=[];
+
+  const centers={
+    '전체':{lat:36.0,lng:127.5,level:13},
+    '서울':{lat:37.555,lng:126.97,level:8},
+    '경기':{lat:37.4,lng:127.0,level:10},
+    '부산':{lat:35.15,lng:129.06,level:8},
+    '대구':{lat:35.85,lng:128.56,level:8},
+    '인천':{lat:37.45,lng:126.65,level:8},
+    '울산':{lat:35.55,lng:129.31,level:8},
+    '대전':{lat:36.34,lng:127.38,level:8},
+    '세종':{lat:36.50,lng:127.22,level:8},
+    '광주':{lat:35.18,lng:126.85,level:8},
+    '강원':{lat:37.8,lng:127.9,level:10},
+    '충북':{lat:36.6,lng:127.5,level:9},
+    '충남':{lat:36.8,lng:127.1,level:9},
+    '전북':{lat:35.8,lng:127.1,level:9},
+    '전남':{lat:34.8,lng:127.0,level:10},
+    '경북':{lat:36.0,lng:129.0,level:10},
+    '경남':{lat:35.2,lng:128.7,level:9},
+    '제주':{lat:33.4,lng:126.55,level:9},
+  };
+  const ctr=centers[state.region]||centers['전체'];
+
+  const options={
+    center:new kakao.maps.LatLng(ctr.lat,ctr.lng),
+    level:ctr.level
+  };
+  kakaoMap=new kakao.maps.Map(el,options);
+  mapObj=kakaoMap;
+  kakaoInfowindow=new kakao.maps.InfoWindow({zIndex:1});
+
+  // 줌 컨트롤
+  kakaoMap.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.BOTTOMRIGHT);
+
+  // 마커 추가
+  f.forEach(function(p){
+    var c=TC[p.type];
+    var pos=new kakao.maps.LatLng(p.lat,p.lng);
+    var marker=new kakao.maps.Marker({map:kakaoMap,position:pos});
+
+    var content='<div style="padding:10px;font-family:Pretendard Variable,sans-serif;min-width:180px;max-width:240px">'
+      +'<div style="font-size:14px;font-weight:700;margin-bottom:4px">'+p.name+'</div>'
+      +'<div style="font-size:12px;color:#888;margin-bottom:6px">'+p.region+' '+p.area+'</div>'
+      +'<div style="font-size:12px;margin-bottom:8px"><span style="color:#EF9F27">★ '+p.rating+'</span> · '+p.price+' · '+p.hours+'</div>'
+      +'<div style="display:flex;gap:6px">'
+      +'<a href="https://map.naver.com/v5/search/'+encodeURIComponent(p.name+' '+p.area)+'" target="_blank" style="flex:1;padding:6px;background:#03C75A;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;text-align:center;text-decoration:none">네이버지도</a>'
+      +'</div></div>';
+
+    kakao.maps.event.addListener(marker,'click',function(){
+      kakaoInfowindow.setContent(content);
+      kakaoInfowindow.open(kakaoMap,marker);
+    });
+    kakaoMarkers.push(marker);
+  });
+
+  // bounds 맞추기
+  if(f.length>1&&state.region==='전체'){
+    var bounds=new kakao.maps.LatLngBounds();
+    f.forEach(function(p){bounds.extend(new kakao.maps.LatLng(p.lat,p.lng))});
+    kakaoMap.setBounds(bounds);
+  }
+}
+
+// 내 주변 검색
+function searchNearby(){
+  if(!navigator.geolocation){showToast('위치 정보를 사용할 수 없습니다');return;}
+  showToast('현재 위치를 찾는 중...');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat=pos.coords.latitude;
+    var lng=pos.coords.longitude;
+    if(!kakaoMap)return;
+
+    var center=new kakao.maps.LatLng(lat,lng);
+    kakaoMap.setCenter(center);
+    kakaoMap.setLevel(4);
+
+    // 현재 위치 마커
+    new kakao.maps.Marker({map:kakaoMap,position:center,image:new kakao.maps.MarkerImage(
+      'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
+      new kakao.maps.Size(24,35)
+    )});
+
+    // 카카오 장소 검색
+    var ps=new kakao.maps.services.Places(kakaoMap);
+    var keywords=['찜질방','만화카페','수면카페','캡슐호텔','사우나'];
+    var allResults=[];
+    var done=0;
+
+    keywords.forEach(function(kw){
+      ps.keywordSearch(kw,function(data,status){
+        done++;
+        if(status===kakao.maps.services.Status.OK){
+          data.forEach(function(place){
+            // 중복 제거
+            if(!allResults.find(function(r){return r.id===place.id})){
+              allResults.push(place);
+              // 마커 추가
+              var marker=new kakao.maps.Marker({
+                map:kakaoMap,
+                position:new kakao.maps.LatLng(place.y,place.x)
+              });
+              var content='<div style="padding:10px;font-family:Pretendard Variable,sans-serif;min-width:180px;max-width:240px">'
+                +'<div style="font-size:14px;font-weight:700;margin-bottom:4px">'+place.place_name+'</div>'
+                +'<div style="font-size:12px;color:#888;margin-bottom:4px">'+place.address_name+'</div>'
+                +(place.phone?'<div style="font-size:12px;color:#666;margin-bottom:6px">'+place.phone+'</div>':'')
+                +'<a href="'+place.place_url+'" target="_blank" style="display:block;padding:6px;background:#FEE500;color:#3C1E1E;border-radius:6px;font-size:11px;font-weight:700;text-align:center;text-decoration:none">카카오맵에서 보기</a>'
+                +'</div>';
+              kakao.maps.event.addListener(marker,'click',function(){
+                kakaoInfowindow.setContent(content);
+                kakaoInfowindow.open(kakaoMap,marker);
+              });
+            }
+          });
+        }
+        if(done===keywords.length){
+          showToast('주변 '+allResults.length+'곳을 찾았습니다!');
+        }
+      },{location:center,radius:3000,sort:kakao.maps.services.SortBy.DISTANCE});
+    });
+  },function(){
+    showToast('위치 권한을 허용해주세요');
+  });
+}
+
+// render 래퍼 - 카카오 시도 후 실패시 Leaflet, 그리고 자동 내 주변 검색
+var _origRender=render;
+var autoSearched=false;
+render=function(){
+  _origRender();
+  if(state.view==='map'){
+    setTimeout(function(){
+      var el=document.getElementById('the-map');
+      if(!el||mapObj)return;
+      // 카카오 시도
+      try{
+        if(window.kakao&&kakao.maps&&kakao.maps.LatLng){
+          initKakaoMap(filtered());
+          mapType='kakao';
+          // 카카오맵 로드 성공 시 자동으로 내 주변 검색
+          if(!autoSearched){autoSearched=true;setTimeout(function(){searchNearby()},500);}
+          return;
+        }
+      }catch(e){console.log('kakao fail',e)}
+      // Leaflet 폴백
+      try{
+        if(window.L){
+          var c={lat:36,lng:127.5,z:7};
+          mapObj=L.map(el,{center:[c.lat,c.lng],zoom:c.z,zoomControl:false});
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(mapObj);
+          L.control.zoom({position:'bottomright'}).addTo(mapObj);
+          mapType='leaflet';
+          var ff=filtered();
+          ff.forEach(function(p){
+            var tc=TC[p.type];
+            var ic=L.divIcon({html:'<div style="width:28px;height:28px;border-radius:50%;background:'+tc.c+';border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:800">'+p.name.charAt(0)+'</div>',className:'',iconSize:[28,28],iconAnchor:[14,14]});
+            L.marker([p.lat,p.lng],{icon:ic}).addTo(mapObj).bindPopup('<div style="font-family:sans-serif"><b>'+p.name+'</b><br><span style="color:#888;font-size:11px">'+p.region+' '+p.area+'</span><br><span style="color:#EF9F27">★'+p.rating+'</span> · '+p.price+'<br><a href="https://map.naver.com/v5/search/'+encodeURIComponent(p.name)+'" target="_blank" style="color:#03C75A;font-weight:700;font-size:12px">네이버지도</a></div>');
+          });
+          if(ff.length>1){var g=L.featureGroup(mapObj._layers?Object.values(mapObj._layers).filter(function(l){return l.getLatLng}):[]);if(g.getLayers().length)mapObj.fitBounds(g.getBounds().pad(0.1));}
+          // Leaflet에서도 내 위치로 자동 이동
+          if(!autoSearched){autoSearched=true;setTimeout(function(){searchNearby()},500);}
+        }
+      }catch(e2){console.log('leaflet fail',e2)}
+    },300);
+  }
+};
+
+function renderDetail(p){
+  const c=TC[p.type];
+  return `<div class="overlay" style="align-items:flex-end;justify-content:center" onclick="setState({selected:null})">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div style="width:40px;height:4px;border-radius:2px;background:#ddd;margin:0 auto 20px"></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div style="width:48px;height:48px;border-radius:14px;background:${c.bg};display:flex;align-items:center;justify-content:center;color:${c.c}">${ico(c.ic,24)}</div>
+        <div style="flex:1">
+          <h3 style="margin:0;font-size:18px;font-weight:800">${p.name}</h3>
+          <div style="display:flex;gap:6px;margin-top:4px">
+            <span class="badge" style="color:${c.c};background:${c.bg}">${p.type}</span>
+            ${p.is24?'<span class="badge-24">24H</span>':''}
+          </div>
+        </div>
+        <button onclick="sharePlace()" style="background:#F3F3EF;border:none;border-radius:10px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:#888">${ico('share',18)}</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+        ${stars(p.rating)}
+        <span style="font-size:15px;font-weight:700">${p.rating}</span>
+        <span style="font-size:12px;color:#888">(${p.reviews.toLocaleString()}개)</span>
+      </div>
+      <p style="font-size:14px;color:#555;line-height:1.7;margin:0 0 20px">${p.desc}</p>
+      <div style="margin-bottom:24px">
+        ${[{ic:'won',l:'이용료',v:p.price},{ic:'clock',l:'운영시간',v:p.hours},{ic:'map',l:'지역',v:p.region+' '+p.area},{ic:'phone',l:'전화',v:p.phone||'-'}].map(r=>`<div class="info-row"><div style="color:#bbb;width:20px;text-align:center">${ico(r.ic,16)}</div><span class="info-label">${r.l}</span><span class="info-value">${r.v}</span></div>`).join('')}
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="action-btn" style="background:${c.c};color:#fff" onclick="window.open('https://map.naver.com/v5/search/${encodeURIComponent(p.name+' '+p.area)}','_blank')">${ico('nav',16)} 네이버 지도</button>
+        ${p.phone?`<button class="action-btn" style="background:${c.bg};color:${c.c};flex:none;padding:14px 18px" onclick="location.href='tel:${p.phone}'">${ico('phone',18)}</button>`:''}
+      </div>
+      <!-- 광고 슬롯: 상세 페이지 하단 -->
+      <div style="margin-top:16px">${adBanner('detail','상세 페이지 광고 영역')}</div>
+    </div>
+  </div>`;
+}
+
+function copyAccount(e){
+  if(e)e.stopPropagation();
+  var acc='29489058920207';
+  var sel=document.querySelector('.tier-selected');
+  var amt=sel?sel.getAttribute('data-amt'):'';
+  var msg=amt?'계좌번호가 복사되었습니다 ('+amt+')':'계좌번호가 복사되었습니다';
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(acc).then(function(){showToast(msg)});
+  }else{
+    var t=document.createElement('textarea');t.value=acc;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);
+    showToast(msg);
+  }
+}
+function selectTier(e,idx){
+  if(e)e.stopPropagation();
+  document.querySelectorAll('.tier').forEach(function(el){el.classList.remove('tier-selected');el.style.borderColor='transparent';el.style.background='#F8F8F6'});
+  var el=document.querySelectorAll('.tier')[idx];
+  if(el){el.classList.add('tier-selected');el.style.borderColor='#7F77DD';el.style.background='#EEEDFE';}
+}
+function showToast(msg){
+  var old=document.getElementById('copy-toast');if(old)old.remove();
+  var d=document.createElement('div');d.id='copy-toast';
+  d.innerHTML=msg||'복사되었습니다';
+  d.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;z-index:99999;animation:toastIn .3s ease;white-space:nowrap;font-family:Pretendard Variable,sans-serif';
+  document.body.appendChild(d);
+  setTimeout(function(){d.style.animation='toastOut .3s ease forwards';setTimeout(function(){d.remove()},300)},2000);
+}
+
+function renderSponsor(){
+  return `<div class="overlay" style="align-items:center;justify-content:center;padding:20px" onclick="setState({sponsor:false})">
+    <div class="modal" onclick="event.stopPropagation()">
+      <button onclick="setState({sponsor:false})" style="position:absolute;top:12px;right:12px;background:none;border:none;padding:4px;color:#888">${ico('x',20)}</button>
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="margin-bottom:8px;color:#7F77DD">${ico('heart',32)}</div>
+        <h2 style="font-size:20px;font-weight:800;color:#26215C;margin:0">쪽잠맵 후원하기</h2>
+        <p style="font-size:13px;color:#888;margin-top:6px">더 나은 쪽잠 문화를 함께 만들어요</p>
+      </div>
+      <div style="background:#F8F8F6;border-radius:14px;padding:20px;text-align:center;margin-bottom:16px">
+        <div style="font-size:13px;color:#888;margin-bottom:6px">후원 계좌</div>
+        <div style="font-size:18px;font-weight:800;color:#1a1a1a;letter-spacing:.5px">하나은행 29489058920207</div>
+      </div>
+      <p style="font-size:12px;color:#999;margin-bottom:8px">후원 금액을 선택하세요</p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+        <div class="tier" data-amt="3,000원" style="background:#F8F8F6" onclick="selectTier(event,0)">
+          <div class="tier-icon" style="background:#E8E8E4;color:#888">${ico('coffee',20)}</div>
+          <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#2C2C2A">커피 한 잔</div><div style="font-size:11px;color:#888;margin-top:1px">감사합니다! 운영에 큰 힘이 됩니다</div></div>
+          <div style="font-size:15px;font-weight:700;color:#2C2C2A">3,000원</div>
+        </div>
+        <div class="tier" data-amt="10,000원" style="background:#F8F8F6" onclick="selectTier(event,1)">
+          <div class="tier-icon" style="background:#E8E8E4;color:#888">${ico('moon',20)}</div>
+          <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#2C2C2A">점심 한 끼</div><div style="font-size:11px;color:#888;margin-top:1px">서버비 + 데이터 업데이트 비용</div></div>
+          <div style="font-size:15px;font-weight:700;color:#2C2C2A">10,000원</div>
+        </div>
+        <div class="tier" data-amt="30,000원" style="background:#F8F8F6" onclick="selectTier(event,2)">
+          <div class="tier-icon" style="background:#E8E8E4;color:#888">${ico('heart',20)}</div>
+          <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#2C2C2A">쪽잠 서포터</div><div style="font-size:11px;color:#888;margin-top:1px">후원자 명단에 이름을 올려드려요</div></div>
+          <div style="font-size:15px;font-weight:700;color:#2C2C2A">30,000원</div>
+        </div>
+      </div>
+      <div onclick="copyAccount(event)" style="width:100%;padding:16px;background:#009587;color:#fff;border-radius:12px;font-size:16px;font-weight:800;text-align:center;cursor:pointer;transition:all .15s" onpointerdown="this.style.transform='scale(.97)'" onpointerup="this.style.transform='scale(1)'" onpointerleave="this.style.transform='scale(1)'">계좌번호 복사하기</div>
+      <p style="font-size:11px;color:#aaa;text-align:center;margin-top:12px">금액을 선택 후 계좌번호를 복사해주세요</p>
+    </div>
+  </div>`;
+}
+
+function renderSuggest(){
+  return `<div class="overlay" style="align-items:center;justify-content:center;padding:20px" onclick="setState({suggest:false})">
+    <div class="modal" style="max-height:85dvh;overflow-y:auto" onclick="event.stopPropagation()">
+      <button onclick="setState({suggest:false})" style="position:absolute;top:12px;right:12px;background:none;border:none;padding:4px;color:#888">${ico('x',20)}</button>
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="margin-bottom:8px;color:#1D9E75">${ico('map',32)}</div>
+        <h2 style="font-size:20px;font-weight:800;color:#26215C;margin:0">쪽잠 장소 추천하기</h2>
+        <p style="font-size:13px;color:#888;margin-top:6px">아는 쪽잠 스팟을 알려주세요!</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#888;margin-bottom:4px;display:block">장소 이름 *</label>
+          <input id="sg-name" type="text" placeholder="예: 꿀잠카페 강남점" style="width:100%;padding:12px;border:1.5px solid #e8e8e4;border-radius:10px;font-size:14px;outline:none;background:#FAFAF7">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#888;margin-bottom:4px;display:block">유형 *</label>
+          <select id="sg-type" style="width:100%;padding:12px;border:1.5px solid #e8e8e4;border-radius:10px;font-size:14px;outline:none;background:#FAFAF7">
+            <option value="">선택하세요</option>
+            <option>낮잠카페</option><option>찜질방</option><option>캡슐호텔</option><option>만화카페</option><option>기타</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#888;margin-bottom:4px;display:block">주소 / 위치 *</label>
+          <input id="sg-addr" type="text" placeholder="예: 서울 강남구 역삼동 123" style="width:100%;padding:12px;border:1.5px solid #e8e8e4;border-radius:10px;font-size:14px;outline:none;background:#FAFAF7">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#888;margin-bottom:4px;display:block">추천 이유 / 메모</label>
+          <textarea id="sg-memo" rows="3" placeholder="예: 24시간 운영, 이불 제공, 조용해서 잠 잘 옴" style="width:100%;padding:12px;border:1.5px solid #e8e8e4;border-radius:10px;font-size:14px;outline:none;background:#FAFAF7;resize:none"></textarea>
+        </div>
+      </div>
+      <div onclick="submitSuggest(event)" style="width:100%;padding:14px;background:#1D9E75;color:#fff;border-radius:12px;font-size:16px;font-weight:800;text-align:center;cursor:pointer;margin-top:16px">추천 보내기</div>
+      <p style="font-size:11px;color:#aaa;text-align:center;margin-top:10px">ceochoiyj@gmail.com 으로 전달됩니다</p>
+    </div>
+  </div>`;
+}
+
+function submitSuggest(e){
+  if(e)e.stopPropagation();
+  var name=document.getElementById('sg-name').value.trim();
+  var type=document.getElementById('sg-type').value;
+  var addr=document.getElementById('sg-addr').value.trim();
+  var memo=document.getElementById('sg-memo').value.trim();
+  if(!name||!type||!addr){showToast('이름, 유형, 주소를 입력해주세요');return;}
+  var subject=encodeURIComponent('쪽잠맵 장소 추천: '+name);
+  var body=encodeURIComponent('장소: '+name+'\n유형: '+type+'\n주소: '+addr+'\n메모: '+memo);
+  window.location.href='mailto:ceochoiyj@gmail.com?subject='+subject+'&body='+body;
+  showToast('메일 앱이 열립니다!');
+}
+
+function sharePlace(){
+  const p=state.selected;if(!p)return;
+  const t=`${p.name} — ${p.type} | ${p.price} | ${p.hours}\n쪽잠맵에서 보기`;
+  if(navigator.share)navigator.share({title:p.name,text:t}).catch(()=>{});
+  else{navigator.clipboard?.writeText(t);alert('클립보드에 복사되었습니다!');}
+}
+
+// ── 광고 배너 시스템 ──
+// 광고주가 생기면 아래 ADS 배열에 추가하면 됩니다.
+// image: 배너 이미지 URL, link: 클릭 시 이동할 URL, alt: 광고 설명
+const ADS = {
+  top: { image:'', link:'mailto:ceochoiyj@gmail.com?subject=쪽잠맵 광고 문의', alt:'', title:'쪽잠 꿀템 모음', desc:'숙면 베개·안대·귀마개 최저가 비교', color:'#7F77DD', bg:'#EEEDFE' },
+  mid0: { image:'', link:'mailto:ceochoiyj@gmail.com?subject=쪽잠맵 광고 문의', alt:'', title:'이 자리에 광고를 게재하세요', desc:'광고 문의 ceochoiyj@gmail.com', color:'#D85A30', bg:'#FAECE7' },
+  mid3: { image:'', link:'mailto:ceochoiyj@gmail.com?subject=쪽잠맵 광고 문의', alt:'', title:'이 자리에 광고를 게재하세요', desc:'광고 문의 ceochoiyj@gmail.com', color:'#1D9E75', bg:'#E1F5EE' },
+  mid6: { image:'', link:'mailto:ceochoiyj@gmail.com?subject=쪽잠맵 광고 문의', alt:'', title:'이 자리에 광고를 게재하세요', desc:'광고 문의 ceochoiyj@gmail.com', color:'#378ADD', bg:'#E6F1FB' },
+  bottom: { image:'', link:'mailto:ceochoiyj@gmail.com?subject=쪽잠맵 광고 문의', alt:'', title:'쪽잠맵 광고 문의', desc:'ceochoiyj@gmail.com', color:'#888', bg:'#F3F3EF' },
+  detail: { image:'', link:'mailto:ceochoiyj@gmail.com?subject=쪽잠맵 광고 문의', alt:'', title:'이 자리에 광고를 게재하세요', desc:'광고 문의 ceochoiyj@gmail.com', color:'#D85A30', bg:'#FAECE7' },
+};
+
+function adBanner(slot, fallbackText) {
+  const ad = ADS[slot] || ADS['bottom'];
+
+  // 실제 광고 이미지가 있을 때만 표시
+  if (ad.image) {
+    return `<a href="${ad.link||'#'}" target="_blank" rel="noopener" style="display:block;margin:10px 0;border-radius:12px;overflow:hidden;border:1px solid #f0f0ec">
+      <img src="${ad.image}" alt="${ad.alt||'광고'}" style="width:100%;height:auto;display:block">
+    </a>`;
+  }
+
+  // 이미지 없으면 광고를 표시하지 않음 (깔끔하게)
+  return '';
+}
+
+render();
+</script>
+</body>
+</html>
